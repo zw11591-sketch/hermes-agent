@@ -7017,6 +7017,17 @@ def run_conversation(
     # (god-file decomposition Phase 1 step 4). Behavior-neutral: the assembled
     # result dict is returned exactly as before.
     from agent.turn_finalizer import finalize_turn
+    # Reset TUI cursor tracking after CJK-heavy responses to prevent
+    # cumulative cursor drift in terminals without CPR (e.g., mintty on
+    # Windows).  No-op in non-TUI modes (get_app_or_none returns None).
+    try:
+        from prompt_toolkit.application import get_app_or_none
+        _tui_app = get_app_or_none()
+        if _tui_app is not None and hasattr(_tui_app, '_force_full_redraw'):
+            _tui_app._force_full_redraw()
+    except Exception:
+        pass
+
     return finalize_turn(
         agent,
         final_response=final_response,
